@@ -1,0 +1,62 @@
+<!DOCTYPE html "-//W3C//DTD XHTML 1.0 Strict//EN" 
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<!--<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"> 
+-->
+<head>
+<link rel="stylesheet" href="/site_media/style.css" type="text/css" media="screen"  charset="utf-8">
+<!-- <script type="text/javascript" src="tabbed.js"></script> -->
+<script src="http://maps.google.com/maps?file=api&v=2&sensor=false&key=ABQIAAAAsYU_U_jVNoazWwWCRWxUmBS9bZigRblo2VqATPXK02zobVRVkhS3BtcPtFP8sXQ3yrRk35yzCld3EQ" type="text/javascript"></script>
+    <script type="text/javascript">
+
+	var map;
+    function initialize() {
+      if (GBrowserIsCompatible()) {
+        map = new GMap2(document.getElementById("map_canvas"));
+        map.setCenter(new GLatLng(37.4419, -122.1419), 13);
+        map.setUIToDefault();
+      }
+    }
+
+    </script>
+
+</head>
+<body onload="initialize()" onunload="GUnload()">
+<div class = "tabArea" border=1>
+<div>
+you are logged in as {{username}}
+</div>
+<div>
+<a href="/addServices">Add services</a>
+<a href="/test">test</a>
+</div>
+<!--
+    <a class="tab activeTab" color: #000000; href="home" target="myIframe">Home</a>
+    <a class="tab" href="glossary" target="myIframe">Glossary</a>
+    <a class="tab" href="contact" target="myIframe">Contact</a>
+-->
+</div>
+
+<div class="tabMain clearfix" color:#606060 background-color: #f4f2f3>
+	<div class="logoArea">
+		<!-- <img src="/site_media/logo.png" height=70px> -->
+	</div>
+	<!-- <div class="loginArea"> 
+	</div> -->
+    <div class="profileinfo" width: 25%; height:100%; padding:0; float:left; border:2px solid #101010>
+        <h2 >Profile Info for: </h2>
+            Picture:<br>
+            Name:<br>
+            Last location:<br>
+    </div>
+
+    <div class =mapcontent id="map_canvas" width: 70%; height:100%; float:right;>
+        This is where the map goes
+    </div>
+<!--    <div class="wrapper">
+        <iframe src="home.html" class="tabContent" name="myIframe" marginheight="8" marginwidth="8" frameborder="0"></iframe>
+    </div> -->
+</div>
+</body>
+</html>

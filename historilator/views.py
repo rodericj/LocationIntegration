@@ -1,12 +1,12 @@
 # Create your views here.
 from Location_Integration.historilator.models import Auth_temp_storage
-from django.shortcuts import render_to_response
-from django.http import HttpResponse
+
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from django.contrib.auth import login
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import render_to_response
+from django.utils import simplejson
 
 import urllib
 import urllib2
@@ -140,16 +140,16 @@ def verifyRegisterParams(emailAddress, username, password, confirmpassword):
     #emailAdd looks like an email addy
     return True
 
-def test(request):
+def getMyCheckins(request):
 	site = config.oauthsite['foursquare']
 
+	#Gather Authentication details
 	this_user = User.objects.get(username=request.user.username)
 	oauth_info = this_user.auth_temp_storage_set.filter(site=site['id'], stage=config.storage_stage['second'])
 
 	request_url = 'http://api.playfoursquare.com/v1/checkins.json'
 	consumer_key = site['consumer_key']
 	consumer_secret = site['consumer_secret']
-
 	access_token = oauth_info[0].token
 	access_token_secret = oauth_info[0].token_secret
 
@@ -171,5 +171,15 @@ def test(request):
 			raise
 	data = stream.read()
 	stream.close()
-	print "RESPONSE: %s" % data
-	return render_to_response('profile.html', {})
+	#print "RESPONSE: %s" % data
+	#print "Loads:-------------------"
+	#print simplejson.loads(data)
+	#json = simplejson.loads(data)
+	print "Dumps:-------------------"
+	#print simplejson.dumps(data)
+	json = simplejson.dumps(data)
+	a = eval(data)
+	print a['checkins'][0]
+	
+	#print eval(data)['checkins'].keys()
+	return HttpResponse(json, mimetype='application/json')

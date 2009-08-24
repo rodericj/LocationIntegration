@@ -5,8 +5,44 @@
 <!--<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"> 
 -->
 <head>
+<script type="text/javascript" src="/site_media/jquery.js"></script>
+<!-- <script type="text/javascript" src="/site_media/ajax.js"></script> -->
+<script>
+var maxlat = 0
+var maxlon = 0
+var minlat = 360
+var minlon = 360
+function placeMarker(map, item){
+	var display = item.display;
+	var venueName = item.venue.name;
+	var lat = item.venue.geolat;
+	var lon = item.venue.geolong;
+	if (lat > maxlat) {  maxlat = lat;}
+	if (lat < minlat) { minlat = lat;}
+
+	if (lon > maxlon) { maxlon = lon;}
+	if (lon < minlon) { minlon = lon;}
+	var point = new GLatLng(lat, lon);
+	map.addOverlay(new GMarker(point), {center:point});
+}
+
+function doneLoading(){
+	$.getJSON("/getMyCheckins",
+        function(data){
+			a = eval("("+data+")");
+          $.each(a['checkins'], function(i,item){
+				placeMarker(map, item)
+			});
+            //$("<img/>").attr("src", item.media.m).appendTo("#images");
+            //if ( i == 3 ) return false;
+			//map.panTo(new GLatLng(minlon, minlat), 13);
+	});
+}
+$(document).ready(doneLoading);
+
+
+</script>
 <link rel="stylesheet" href="/site_media/style.css" type="text/css" media="screen"  charset="utf-8">
-<!-- <script type="text/javascript" src="tabbed.js"></script> -->
 <script src="http://maps.google.com/maps?file=api&v=2&sensor=false&key=ABQIAAAAsYU_U_jVNoazWwWCRWxUmBS9bZigRblo2VqATPXK02zobVRVkhS3BtcPtFP8sXQ3yrRk35yzCld3EQ" type="text/javascript"></script>
     <script type="text/javascript">
 
@@ -29,7 +65,11 @@ you are logged in as {{username}}
 </div>
 <div>
 <a href="/addServices">Add services</a>
-<a href="/test">test</a>
+<a href="/getMyCheckins">test</a>
+<span id="getMyCheckins">get my checkins</span>
+<div class = "getMyCheckins">
+<span id="getMyCheckins">get my checkins2</span>
+</div>
 </div>
 <!--
     <a class="tab activeTab" color: #000000; href="home" target="myIframe">Home</a>

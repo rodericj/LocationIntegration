@@ -1,0 +1,69 @@
+div.tabArea{
+    font-size:80%;
+    font-weight: bold;
+    background-color: #F4F2F3;
+    border: 1px solid #000000;
+}
+
+a.tab{
+    padding: 2px 1em 2px 1em;
+    position: relative;
+    text-decoration: none;
+    color: #000000;
+    top: -1px;
+    z-index: 100;
+}
+
+a.tab.activeTab, a.tab.activeTab:hover, a.tab.activeTab:visited {
+    background-color: #F4F2F3;
+    border-top: 1px solid #000000;
+    border-left: 1px solid #000000;
+    border-right: 1px solid #000000;
+}
+
+a.tab:hover {
+    background-color: #d0d0d0;
+    color: #606060;
+}
+
+div.tabMain{
+    background-color:#F4F2F3;
+    border: 1px solid #000000;
+    padding: 1em;
+}
+
+div.profileinfo{
+    width: 25%;
+    height:95%;
+    padding:0;
+    float:left;
+    border:2px solid #101010;
+}
+
+div.logoArea{
+	float:left;
+	width:100%;
+	background-color:#555555;
+}
+div.loginArea{
+	padding-top:10px;
+	background-color:#555555;
+}
+div.mapcontent{
+    width: 70%;
+    height:95%;
+    float:right;
+    border:2px solid #101010;
+    background-color:#ffffff;
+}
+.clearfix:after {
+    clear: both;
+    content: "";
+    display: block;
+    height: 0;
+    visibility: hidden;
+}
+
+.clearfix {
+}
+

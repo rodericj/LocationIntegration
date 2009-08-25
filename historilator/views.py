@@ -1,5 +1,5 @@
 # Create your views here.
-from Location_Integration.historilator.models import Auth_temp_storage
+from LocationIntegration.historilator.models import Auth_temp_storage
 
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required

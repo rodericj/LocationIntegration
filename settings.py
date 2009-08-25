@@ -1,4 +1,5 @@
 # Django settings for Location-Integration project.
+import os
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -63,13 +64,14 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 )
 
-ROOT_URLCONF = 'Location_Integration.urls'
+ROOT_URLCONF = 'LocationIntegration.urls'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    '/Users/roderic/dev/Location_Integration/templates'
+    #'/Users/roderic/dev/LocationIntegration/templates'
+    os.getcwd()+'/templates'
 
 )
 
@@ -78,7 +80,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.sites',
-	'Location_Integration.historilator',
+    'LocationIntegration.historilator',
 )
 
 OAUTH_REALM_KEY_NAME = "http://api.playfoursquare.com"

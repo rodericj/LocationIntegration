@@ -5,6 +5,7 @@
 <!--<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"> 
 -->
 <head>
+<script src="http://maps.google.com/maps/api/js?sensor=false">" type="text/javascript"></script>
 <script type="text/javascript" src="/site_media/jquery.js"></script>
 <!-- <script type="text/javascript" src="/site_media/ajax.js"></script> -->
 <script>
@@ -22,12 +23,43 @@ function placeMarker(map, item){
 
 	if (lon > maxlon) { maxlon = lon;}
 	if (lon < minlon) { minlon = lon;}
-	var point = new GLatLng(lat, lon);
-	map.addOverlay(new GMarker(point), {center:point});
+
+	//Make a point and put it on the map
+	var point = new google.maps.LatLng(lat, lon);
+	map.set_center(point);
+	var myOptions = {zoom:4, center:point,mapTypeId: google.maps.MapTypeId.ROADMAP,}
+
+	var marker = new google.maps.Marker({
+		position: point,
+		map: map,
+		title: item.user.firstname + " " + item.user.lastname,
+	});
+
+	google.maps.event.addListener(marker, 'click', function(){
+		infowindow.open(map,marker);
+	});
+
+	var shout = item.shout
+	if (shout == null){
+		shout = ''
+	}
+	var venueLink = 'http://playfoursquare.com/venue/'+item.venue.id
+
+	var contentString = '<table><tr><td><img height=40px src=\''
+						+item.user.photo+'\'</td>'
+						+'<td>'+item.user.firstname+' '+item.user.lastname
+						+'<br>@<a href=\''
+						+venueLink+'\'>'+item.venue.name+'</a><br><i>'
+						+shout+'</i> <img src=\'site_media/yelp.gif\'></td></tr></table>'
+
+var infowindow = new google.maps.InfoWindow({
+    content: contentString
+});
+
 }
 
 function doneLoading(){
-	$.getJSON("/getMyCheckins",
+	$.getJSON("/getMyCheckins/",
         function(data){
 			a = eval("("+data+")");
           $.each(a['checkins'], function(i,item){
@@ -43,16 +75,18 @@ $(document).ready(doneLoading);
 
 </script>
 <link rel="stylesheet" href="/site_media/style.css" type="text/css" media="screen"  charset="utf-8">
-<script src="http://maps.google.com/maps?file=api&v=2&sensor=false&key=ABQIAAAAsYU_U_jVNoazWwWCRWxUmBS9bZigRblo2VqATPXK02zobVRVkhS3BtcPtFP8sXQ3yrRk35yzCld3EQ" type="text/javascript"></script>
+<!-- <script src="http://maps.google.com/maps?file=api&v=3&sensor=false&key=ABQIAAAAsYU_U_jVNoazWwWCRWxUmBS9bZigRblo2VqATPXK02zobVRVkhS3BtcPtFP8sXQ3yrRk35yzCld3EQ" type="text/javascript"></script> -->
     <script type="text/javascript">
 
 	var map;
     function initialize() {
-      if (GBrowserIsCompatible()) {
-        map = new GMap2(document.getElementById("map_canvas"));
-        map.setCenter(new GLatLng(37.4419, -122.1419), 13);
-        map.setUIToDefault();
-      }
+		var latlng = new google.maps.LatLng(-34.397, 150.644);
+		var myOptions = {
+			zoom: 8,
+			center: latlng,
+			mapTypeId: google.maps.MapTypeId.ROADMAP
+		};
+		map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
     }
 
     </script>
@@ -71,19 +105,11 @@ you are logged in as {{username}}
 <span id="getMyCheckins">get my checkins2</span>
 </div>
 </div>
-<!--
-    <a class="tab activeTab" color: #000000; href="home" target="myIframe">Home</a>
-    <a class="tab" href="glossary" target="myIframe">Glossary</a>
-    <a class="tab" href="contact" target="myIframe">Contact</a>
--->
 </div>
 
 <div class="tabMain clearfix" color:#606060 background-color: #f4f2f3>
 	<div class="logoArea">
-		<!-- <img src="/site_media/logo.png" height=70px> -->
 	</div>
-	<!-- <div class="loginArea"> 
-	</div> -->
     <div class="profileinfo" width: 25%; height:100%; padding:0; float:left; border:2px solid #101010>
         <h2 >Profile Info for: </h2>
             Picture:<br>
@@ -94,9 +120,6 @@ you are logged in as {{username}}
     <div class =mapcontent id="map_canvas" width: 70%; height:100%; float:right;>
         This is where the map goes
     </div>
-<!--    <div class="wrapper">
-        <iframe src="home.html" class="tabContent" name="myIframe" marginheight="8" marginwidth="8" frameborder="0"></iframe>
-    </div> -->
 </div>
 </body>
 </html>

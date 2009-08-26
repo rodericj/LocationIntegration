@@ -178,7 +178,7 @@ def getUser(request):
 	else:
 		request_url = 'http://api.playfoursquare.com/v1/user.json'
 	this_user = User.objects.get(username=request.user.username)
-	
+
 	data = performRequest(request_url, site, this_user)
 	print simplejson.dumps(data)
 	return HttpResponse(simplejson.dumps(data), mimetype='application/json')

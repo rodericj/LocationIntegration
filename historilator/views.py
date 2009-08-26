@@ -139,19 +139,12 @@ def verifyRegisterParams(emailAddress, username, password, confirmpassword):
 
     #emailAdd looks like an email addy
     return True
-def getUser(request):
-	print "in getUser"
-	return HttpResponse({}, mimetype='application/json')
-	#return HttpResponse(json, mimetype='application/json')
 
-def getMyCheckins(request):
-	site = config.oauthsite['foursquare']
-
+def performRequest(url, site, this_user):
 	#Gather Authentication details
-	this_user = User.objects.get(username=request.user.username)
 	oauth_info = this_user.auth_temp_storage_set.filter(site=site['id'], stage=config.storage_stage['second'])
 
-	request_url = 'http://api.playfoursquare.com/v1/checkins.json'
+	request_url = url
 	consumer_key = site['consumer_key']
 	consumer_secret = site['consumer_secret']
 	access_token = oauth_info[0].token
@@ -175,15 +168,26 @@ def getMyCheckins(request):
 			raise
 	data = stream.read()
 	stream.close()
-	#print "RESPONSE: %s" % data
-	#print "Loads:-------------------"
-	#print simplejson.loads(data)
-	#json = simplejson.loads(data)
-	print "Dumps:-------------------"
-	#print simplejson.dumps(data)
-	json = simplejson.dumps(data)
-	a = eval(data)
-	print a['checkins'][0]
+	return data
+
+def getUser(request):
+	print "in getUser"
+	site = config.oauthsite['foursquare']
+	if request.GET.has_key('uid'):
+		request_url = 'http://api.playfoursquare.com/v1/user.json?uid='+request.GET['uid']
+	else:
+		request_url = 'http://api.playfoursquare.com/v1/user.json'
+	this_user = User.objects.get(username=request.user.username)
 	
-	#print eval(data)['checkins'].keys()
+	data = performRequest(request_url, site, this_user)
+	print simplejson.dumps(data)
+	return HttpResponse(simplejson.dumps(data), mimetype='application/json')
+
+def getMyCheckins(request):
+	site = config.oauthsite['foursquare']
+	request_url = 'http://api.playfoursquare.com/v1/checkins.json'
+	this_user = User.objects.get(username=request.user.username)
+
+	data = performRequest(request_url, site, this_user)
+	json = simplejson.dumps(data)
 	return HttpResponse(json, mimetype='application/json')

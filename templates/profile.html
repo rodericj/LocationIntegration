@@ -47,9 +47,11 @@ function placeMarker(map, item){
 
 	var contentString = '<table><tr><td><a href=# onclick=getUser('+item.user.id+')><img height=40px src=\''
 						+item.user.photo+'\'</td>'
-						+'<td>'+item.user.firstname+' '+item.user.lastname
+						+'<td>'+item.user.firstname+' '
+						+item.user.lastname
 						+'</a><br>@<a href=\''
-						+venueLink+'\'>'+item.venue.name+'</a><br><i>'
+						+venueLink+'\'>'
+						+item.venue.name+'</a><br><i>'
 						+shout+'</i> <img src=\'site_media/yelp.gif\'></td></tr></table>'
 
 var infowindow = new google.maps.InfoWindow({
@@ -58,12 +60,33 @@ var infowindow = new google.maps.InfoWindow({
 
 }
 
-function getUser(){
-	$.getJSON("/getUser/",
+function getUser(uid){
+	$.getJSON("/getUser/?uid="+uid,
 		function(data){
 			a = eval("("+data+")");
 			}
 		);
+}
+function putStuffInProfilePane(data){
+	//Take stuff from data
+	x = eval("("+data+")");
+	var first = x.user.firstname
+	var last = x.user.lastname
+	var city = x.user.city.name
+	var photo = x.user.photo
+	var gender = x.user.gender
+	var checkin_time = x.user.checkin.created
+	var venue = x.user.checkin.venue.id
+	var venue_link = 'http://playfoursquare.com/venue/'+venue
+	var venue_name = x.user.checkin.venue.name
+	var shout = x.user.checkin.shout
+	if (shout == null){ shout = ''; }
+	var userInfo = document.getElementById('userinfo');
+
+	//setup the new div
+	var newdiv = document.createElement('div');
+	newdiv.innerHTML = "<img src = "+photo+">"+shout+"<br><b>"+first+" "+ last +"</b><br><a href="+venue_link+">"+venue_name+"</a><br><font size=1> "+ checkin_time+"</font>"
+	userInfo.appendChild(newdiv);
 }
 function doneLoading(){
 	$.getJSON("/getMyCheckins/",
@@ -76,6 +99,10 @@ function doneLoading(){
             //if ( i == 3 ) return false;
 			//map.panTo(new GLatLng(minlon, minlat), 13);
 	});
+	$.getJSON("/getUser/",
+		function(data){
+			putStuffInProfilePane(data);
+		});
 }
 $(document).ready(doneLoading);
 
@@ -118,10 +145,11 @@ you are logged in as {{username}}
 	<div class="logoArea">
 	</div>
     <div class="profileinfo" width: 25%; height:100%; padding:0; float:left; border:2px solid #101010>
+    	<div>
         <h2 >Profile Info for: </h2>
-            Picture:<br>
-            Name:<br>
-            Last location:<br>
+        </div>
+        <div id="userinfo">
+        </div>
     </div>
 
     <div class =mapcontent id="map_canvas" width: 70%; height:100%; float:right;>

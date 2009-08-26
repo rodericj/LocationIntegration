@@ -45,10 +45,10 @@ function placeMarker(map, item){
 	}
 	var venueLink = 'http://playfoursquare.com/venue/'+item.venue.id
 
-	var contentString = '<table><tr><td><img height=40px src=\''
+	var contentString = '<table><tr><td><a href=# onclick=getUser('+item.user.id+')><img height=40px src=\''
 						+item.user.photo+'\'</td>'
 						+'<td>'+item.user.firstname+' '+item.user.lastname
-						+'<br>@<a href=\''
+						+'</a><br>@<a href=\''
 						+venueLink+'\'>'+item.venue.name+'</a><br><i>'
 						+shout+'</i> <img src=\'site_media/yelp.gif\'></td></tr></table>'
 
@@ -58,6 +58,13 @@ var infowindow = new google.maps.InfoWindow({
 
 }
 
+function getUser(){
+	$.getJSON("/getUser/",
+		function(data){
+			a = eval("("+data+")");
+			}
+		);
+}
 function doneLoading(){
 	$.getJSON("/getMyCheckins/",
         function(data){

@@ -139,6 +139,10 @@ def verifyRegisterParams(emailAddress, username, password, confirmpassword):
 
     #emailAdd looks like an email addy
     return True
+def getUser(request):
+	print "in getUser"
+	return HttpResponse({}, mimetype='application/json')
+	#return HttpResponse(json, mimetype='application/json')
 
 def getMyCheckins(request):
 	site = config.oauthsite['foursquare']

@@ -170,6 +170,13 @@ def performRequest(url, site, this_user):
 	stream.close()
 	return data
 
+def getMyCheckins(request):
+	
+	print request.GET['rss']
+	rss = request.GET['rss']
+	data = urllib.urlopen('http://feeds.playfoursqure.com/history/request/'+rss+'.rss')
+	print simplejson.dumps(data)
+	return HttpResponse(simplejson.dumps(data), mimetype='application/json')
 def getUser(request):
 	print "in getUser"
 	site = config.oauthsite['foursquare']
@@ -183,7 +190,7 @@ def getUser(request):
 	print simplejson.dumps(data)
 	return HttpResponse(simplejson.dumps(data), mimetype='application/json')
 
-def getMyCheckins(request):
+def getFriends(request):
 	site = config.oauthsite['foursquare']
 	request_url = 'http://api.playfoursquare.com/v1/checkins.json'
 	this_user = User.objects.get(username=request.user.username)

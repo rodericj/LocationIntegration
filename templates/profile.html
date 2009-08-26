@@ -80,16 +80,24 @@ function putStuffInProfilePane(data){
 	var venue_link = 'http://playfoursquare.com/venue/'+venue
 	var venue_name = x.user.checkin.venue.name
 	var shout = x.user.checkin.shout
+	var rss = x.user.settings.feeds_key
 	if (shout == null){ shout = ''; }
 	var userInfo = document.getElementById('userinfo');
 
 	//setup the new div
 	var newdiv = document.createElement('div');
-	newdiv.innerHTML = "<img src = "+photo+">"+shout+"<br><b>"+first+" "+ last +"</b><br><a href="+venue_link+">"+venue_name+"</a><br><font size=1> "+ checkin_time+"</font>"
+	newdiv.innerHTML = "<img src = "+photo+">"+shout+"<br><b>"+first+" "+ last +"</b><br><a href="+venue_link+">"+venue_name+"</a><br><font size=1> "+ checkin_time+"<br><a href=# onclick=loadMyCheckins('"+rss+"')>my checkins</font>"
 	userInfo.appendChild(newdiv);
 }
+
+function gotMyCheckins(data){
+	alert("got my checkins")
+	}
+function loadMyCheckins(feed){
+	$.getJSON("/getMyCheckins/?rss="+feed, gotMyCheckins);
+	}
 function doneLoading(){
-	$.getJSON("/getMyCheckins/",
+	$.getJSON("/getFriends/",
         function(data){
 			a = eval("("+data+")");
           $.each(a['checkins'], function(i,item){
@@ -133,10 +141,6 @@ you are logged in as {{username}}
 </div>
 <div>
 <a href="/addServices">Add services</a>
-<a href="/getMyCheckins">test</a>
-<span id="getMyCheckins">get my checkins</span>
-<div class = "getMyCheckins">
-<span id="getMyCheckins">get my checkins2</span>
 </div>
 </div>
 </div>

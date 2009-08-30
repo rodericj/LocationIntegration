@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render_to_response
 from django.utils import simplejson
+from BeautifulSoup import BeautifulStoneSoup
 
 import urllib
 import urllib2
@@ -78,15 +79,16 @@ def addServices(request):
 	this_user = User.objects.get(username=request.user.username)
 	
 	ret['foursquare_link'] = doAuthorizeStep(this_user, 'foursquare')
-	ret['tripit_link'] = doAuthorizeStep(this_user, 'tripit', '&oauth_callback=localhost:8000/auth')
+	ret['tripit_link'] = doAuthorizeStep(this_user, 'tripit', '&oauth_callback=http://localhost:8000/auth?site=tripit')
 
 	return render_to_response('login.html', ret)
 
 def auth(request):
 	this_user = User.objects.get(username=request.user.username)
-	if request.META['HTTP_REFERER'].count('tripit'):
+	print request.GET
+	if request.GET.get('site',0) == 'tripit':
 		site = config.oauthsite['tripit']
-	elif request.META['HTTP_REFERER'].count('playfoursquare'):
+	elif request.META.get('HTTP_REFERER', 0).count('playfoursquare'):
 		site = config.oauthsite['foursquare']
 	else:
 		logging.warn("Something is wrong. We are getting oauth requests NOT from a source supported")
@@ -173,38 +175,64 @@ def performRequest(url, site, this_user):
 			raise
 	data = stream.read()
 	stream.close()
+	print data
 	return data
 
-def getMyCheckins(request):
-	
-	#rss = request.GET['rss']
-	#url = 'http://feeds.playfoursquare.com/history/'+rss+'.rss'
-	#new_request = urllib2.Request(url)
-	#stream = urllib2.urlopen(new_request)
-	#data = stream.read()
-
-	data1 = feedparser.parse('http://feeds.playfoursquare.com/history/17f32ec6b65e8577d3ea14b0806fd42f.rss')
-
-	for i in data1['entries']:
-		i['updated_parsed'] = str(i['updated_parsed'])
-
-	venue_url = 'http://api.playfoursquare.com/v1/venue.json'
-	venueList = []
-	site = config.oauthsite['foursquare']
+def getMyTrips(request):
+	url = 'https://api.tripit.com/v1/list/trip'
+	site = config.oauthsite['tripit']
 	this_user = User.objects.get(username=request.user.username)
-	request_url = 'http://api.playfoursquare.com/v1/user'
-	for i in data1['entries']:
-		vid = i['links'][0]['href'][32:]
-		print 'getting vid: '+vid
-		url = request_url#+"%3duid="+'123'
-		venue = performRequest(url, site, this_user)
-		print "this venue returned: "
-		print venue
-		venueList.append(venue)
+	data = performRequest(url, site, this_user)
+	data1 = feedparser.parse(data)
+	print data1
+	print data
+	print simplejson.dumps(data1)
+	return HttpResponse(simplejson.dumps(data), mimetype='application/json')
 
-	print "final venue list"
-	print venueList
-	return HttpResponse(simplejson.dumps(data1), mimetype='application/xml+rss')
+def getMyCheckins(request):
+	kml = 'http://feeds.playfoursquare.com/history/17f32ec6b65e8577d3ea14b0806fd42f.kml'
+	urlobj = urllib.urlopen(kml)
+	kmlfeed = urlobj.read()
+	soup = BeautifulStoneSoup(kmlfeed)
+	print "Printing all places you've been"
+	placemarks = soup.findAll('placemark')
+	print len(placemarks)
+	ret = {}
+	for i in range(len(placemarks)):
+		long,lat = str(soup.findAll('coordinates')[i])[13:-14].split(',')
+		ret[i] = {'venue':{'name': str(soup.findAll('name')[i])[6:-7],
+				'updated': str(soup.findAll('updated')[i])[9:-10],
+				'geolat': lat,
+				'geolong': long,},
+				'display': str(soup.findAll('description')[i])[13:-14],
+				}
+
+	print ret
+	
+	#data1 = feedparser.parse('http://feeds.playfoursquare.com/history/17f32ec6b65e8577d3ea14b0806fd42f.rss')
+
+	#for i in data1['entries']:
+		#i['updated_parsed'] = str(i['updated_parsed'])
+
+	#venue_url = 'http://api.playfoursquare.com/v1/venue.json'
+	#venueList = []
+	#site = config.oauthsite['foursquare']
+	#this_user = User.objects.get(username=request.user.username)
+	#request_url = 'http://api.playfoursquare.com/v1/venue'
+	#for i in data1['entries'][:2]:
+		#vid = i['links'][0]['href'][32:]
+		#print 'getting vid: '+vid
+		#url = request_url+"/%3dvid="+vid
+		#url = request_url+"/&vid="+vid
+		#venue = performRequest(url, site, this_user)
+		#print "this venue returned: "
+		#print venue
+		#venueList.append(venue)
+
+	#print "final venue list"
+	#print venueList
+	print simplejson.dumps(ret)
+	return HttpResponse(simplejson.dumps(ret), mimetype='application/json')
 
 def getVenue(venueId):
 	print "get Venue"
@@ -217,9 +245,8 @@ def getUser(request):
 		request_url = 'http://api.playfoursquare.com/v1/user.json'
 	this_user = User.objects.get(username=request.user.username)
 	data = performRequest(request_url, site, this_user)
-
-	
-		
+	print "data from getUser"
+	print data
 	return HttpResponse(simplejson.dumps(data), mimetype='application/json')
 
 def getFriends(request):

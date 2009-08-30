@@ -16,7 +16,7 @@ oauthsite = {
 		'id' : 'tr',
 		'api_url' : 'https://api.tripit.com/oauth/request_token',
 		'api_access_token_url' : 'https://api.tripit.com/oauth/access_token',
-		'api_authorize_url' : 'https://api.tripit.com/oauth/authorize',
+		'api_authorize_url' : 'https://www.tripit.com/oauth/authorize',
 		'consumer_key' : 'a004e722790bbcc3ab628480b85bd7b76f2a783a',
 		'consumer_secret' : '96de3bdf33bfa359718e71249394e4d9945b96b3',
 	}

@@ -1,0 +1,6 @@
+I should note that I've got a few packages that I'm using in this:
+
+-elementtree
+-tripit's oauth library
+-oauth I think
+-feedparser - feedparser.org

@@ -7,12 +7,14 @@
 <head>
 <script src="http://maps.google.com/maps/api/js?sensor=false">" type="text/javascript"></script>
 <script type="text/javascript" src="/site_media/jquery.js"></script>
-<!-- <script type="text/javascript" src="/site_media/ajax.js"></script> -->
+<script type="text/javascript" src="/site_media/jfeed.js"></script>
+<script type="text/javascript" src="/site_media/rssajax.js"></script>
 <script>
 var maxlat = 0
 var maxlon = 0
 var minlat = 360
 var minlon = 360
+var mydata;
 function placeMarker(map, item){
 	var display = item.display;
 	var venueName = item.venue.name;
@@ -86,16 +88,37 @@ function putStuffInProfilePane(data){
 
 	//setup the new div
 	var newdiv = document.createElement('div');
-	newdiv.innerHTML = "<img src = "+photo+">"+shout+"<br><b>"+first+" "+ last +"</b><br><a href="+venue_link+">"+venue_name+"</a><br><font size=1> "+ checkin_time+"<br><a href=# onclick=loadMyCheckins('"+rss+"')>my checkins</font>"
+	newdiv.innerHTML = "<img src = "+photo+">"+shout
+						+"<br><b>"+first+" "+ last +"</b><br><a href="
+						+venue_link+">"+venue_name+"</a><br><font size=1> "
+						+ checkin_time
+						+"<br><a href=# onclick=loadMyCheckins('"+rss+"')>11my checkins</a>"
+						+"<br><a href=# onclick=getRSS('"+rss+"')>333my checkins</a></font>"
 	userInfo.appendChild(newdiv);
 }
 
+function getRSS(url){
+	jQuery.getFeed({
+		url:"http://feeds.playfoursquare.com/history/17f32ec6b65e8577d3ea14b0806fd42f.rss", 
+		success: function(feed){
+			alert(feed.title);
+		}
+	});
+}
 function gotMyCheckins(data){
-	alert("got my checkins")
+	var mydata = data;
+	alert('got my data')
+	alert(data.entries);
+	var xmlobject = (new DOMParser()).parseFromString(data)
+	alert('got my data')
+	var channels = xmlobject.getElementsByTagName('item');
+	alert(channels);
 	}
+
 function loadMyCheckins(feed){
 	$.getJSON("/getMyCheckins/?rss="+feed, gotMyCheckins);
-	}
+}
+
 function doneLoading(){
 	$.getJSON("/getFriends/",
         function(data){

@@ -13,8 +13,9 @@ import urllib2
 import logging
 import config
 import tripit
+import feedparser
 
-@login_required(redirect_field_name='login')
+@login_required(redirect_field_name='/login')
 def start(request):
     ret = {}
     ret['username'] = request.user.username
@@ -77,7 +78,7 @@ def addServices(request):
 	this_user = User.objects.get(username=request.user.username)
 	
 	ret['foursquare_link'] = doAuthorizeStep(this_user, 'foursquare')
-	ret['tripit_link'] = doAuthorizeStep(this_user, 'tripit')
+	ret['tripit_link'] = doAuthorizeStep(this_user, 'tripit', '&oauth_callback=localhost:8000/auth')
 
 	return render_to_response('login.html', ret)
 
@@ -113,7 +114,7 @@ def auth(request):
 
 	return render_to_response('profile.html', {})
 
-def doAuthorizeStep(this_user, site_name):
+def doAuthorizeStep(this_user, site_name, options=''):
 		site = config.oauthsite[site_name]
 		print "Starting " + site_name + " OAuth Process"
 		oauth_credential = tripit.OAuthConsumerCredential(oauth_consumer_key=site['consumer_key'], oauth_consumer_secret=site['consumer_secret'])
@@ -124,7 +125,7 @@ def doAuthorizeStep(this_user, site_name):
 		request_token = request_token_batch['oauth_token']
 		request_token_secret = request_token_batch['oauth_token_secret']
 
-		link = site['api_authorize_url']+"?oauth_token="+request_token
+		link = site['api_authorize_url']+"?oauth_token="+request_token+options
 	
 		#need to save the request_token
 		#delete all keys that already exist, we need to replace them
@@ -142,6 +143,10 @@ def verifyRegisterParams(emailAddress, username, password, confirmpassword):
 
 def performRequest(url, site, this_user):
 	#Gather Authentication details
+	print "perform Request Stuff:::::::::::::::::"
+	print site
+	print url
+	print this_user
 	oauth_info = this_user.auth_temp_storage_set.filter(site=site['id'], stage=config.storage_stage['second'])
 
 	request_url = url
@@ -172,22 +177,49 @@ def performRequest(url, site, this_user):
 
 def getMyCheckins(request):
 	
-	print request.GET['rss']
-	rss = request.GET['rss']
-	data = urllib.urlopen('http://feeds.playfoursqure.com/history/request/'+rss+'.rss')
-	print simplejson.dumps(data)
-	return HttpResponse(simplejson.dumps(data), mimetype='application/json')
+	#rss = request.GET['rss']
+	#url = 'http://feeds.playfoursquare.com/history/'+rss+'.rss'
+	#new_request = urllib2.Request(url)
+	#stream = urllib2.urlopen(new_request)
+	#data = stream.read()
+
+	data1 = feedparser.parse('http://feeds.playfoursquare.com/history/17f32ec6b65e8577d3ea14b0806fd42f.rss')
+
+	for i in data1['entries']:
+		i['updated_parsed'] = str(i['updated_parsed'])
+
+	venue_url = 'http://api.playfoursquare.com/v1/venue.json'
+	venueList = []
+	site = config.oauthsite['foursquare']
+	this_user = User.objects.get(username=request.user.username)
+	request_url = 'http://api.playfoursquare.com/v1/user'
+	for i in data1['entries']:
+		vid = i['links'][0]['href'][32:]
+		print 'getting vid: '+vid
+		url = request_url#+"%3duid="+'123'
+		venue = performRequest(url, site, this_user)
+		print "this venue returned: "
+		print venue
+		venueList.append(venue)
+
+	print "final venue list"
+	print venueList
+	return HttpResponse(simplejson.dumps(data1), mimetype='application/xml+rss')
+
+def getVenue(venueId):
+	print "get Venue"
+	
 def getUser(request):
-	print "in getUser"
 	site = config.oauthsite['foursquare']
 	if request.GET.has_key('uid'):
 		request_url = 'http://api.playfoursquare.com/v1/user.json?uid='+request.GET['uid']
 	else:
 		request_url = 'http://api.playfoursquare.com/v1/user.json'
 	this_user = User.objects.get(username=request.user.username)
-
 	data = performRequest(request_url, site, this_user)
-	print simplejson.dumps(data)
+
+	
+		
 	return HttpResponse(simplejson.dumps(data), mimetype='application/json')
 
 def getFriends(request):

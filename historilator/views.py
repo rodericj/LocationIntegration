@@ -195,44 +195,17 @@ def getMyCheckins(request):
 	urlobj = urllib.urlopen(kml)
 	kmlfeed = urlobj.read()
 	soup = BeautifulStoneSoup(kmlfeed)
-	print "Printing all places you've been"
 	placemarks = soup.findAll('placemark')
-	print len(placemarks)
 	ret = {}
 	for i in range(len(placemarks)):
-		long,lat = str(soup.findAll('coordinates')[i])[13:-14].split(',')
-		ret[i] = {'venue':{'name': str(soup.findAll('name')[i])[6:-7],
-				'updated': str(soup.findAll('updated')[i])[9:-10],
+		soup = BeautifulStoneSoup(str(placemarks[i]))
+		long,lat = str(soup.findAll('coordinates')[0])[13:-14].split(',')
+		ret[i] = {'venue':{'name': str(soup.findAll('name')[0])[6:-7],
+				'updated': str(soup.findAll('updated')[0])[9:-10],
 				'geolat': lat,
 				'geolong': long,},
-				'display': str(soup.findAll('description')[i])[13:-14],
+				'display': str(soup.findAll('description')[0])[13:-14],
 				}
-
-	print ret
-	
-	#data1 = feedparser.parse('http://feeds.playfoursquare.com/history/17f32ec6b65e8577d3ea14b0806fd42f.rss')
-
-	#for i in data1['entries']:
-		#i['updated_parsed'] = str(i['updated_parsed'])
-
-	#venue_url = 'http://api.playfoursquare.com/v1/venue.json'
-	#venueList = []
-	#site = config.oauthsite['foursquare']
-	#this_user = User.objects.get(username=request.user.username)
-	#request_url = 'http://api.playfoursquare.com/v1/venue'
-	#for i in data1['entries'][:2]:
-		#vid = i['links'][0]['href'][32:]
-		#print 'getting vid: '+vid
-		#url = request_url+"/%3dvid="+vid
-		#url = request_url+"/&vid="+vid
-		#venue = performRequest(url, site, this_user)
-		#print "this venue returned: "
-		#print venue
-		#venueList.append(venue)
-
-	#print "final venue list"
-	#print venueList
-	print simplejson.dumps(ret)
 	return HttpResponse(simplejson.dumps(ret), mimetype='application/json')
 
 def getVenue(venueId):

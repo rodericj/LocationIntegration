@@ -67,7 +67,16 @@ function buildfriendFoursquareCheckinPopup(item){
 }
 
 function buildSelfPopup(item){
-	return "this is a self popup"
+	var shout = item.shout
+	if (shout == null){
+		shout = ''
+	}
+	var venueLink = 'http://playfoursquare.com/venue/'+item.venue.id
+	var ret = '<table><tr><td>You were @<a href=\''
+						+venueLink+'\'>'
+						+item.venue.name+'</a><br><i>'
+						+shout+'</i> <img src=\'site_media/yelp.gif\'></td></tr></table>'
+	return ret
 }
 
 function getUser(uid){

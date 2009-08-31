@@ -15,8 +15,7 @@ var maxlon = 0
 var minlat = 360
 var minlon = 360
 var mydata;
-function placeMarker(map, item, content){
-	var contentString = content;
+function placeMarker(map, item, content, markerFunction){
 	var display = item.display;
 	var venueName = item.venue.name;
 	var lat = item.venue.geolat;
@@ -31,12 +30,7 @@ function placeMarker(map, item, content){
 	var point = new google.maps.LatLng(lat, lon);
 	map.set_center(point);
 	var myOptions = {zoom:4, center:point,mapTypeId: google.maps.MapTypeId.ROADMAP,}
-
-	var marker = new google.maps.Marker({
-		position: point,
-		map: map,
-		//title: item.user.firstname + " " + item.user.lastname,
-	});
+	var marker = markerFunction(point, item);
 
 	google.maps.event.addListener(marker, 'click', function(){
 		infowindow.open(map,marker);
@@ -48,9 +42,9 @@ function placeMarker(map, item, content){
 	}
 	var venueLink = 'http://playfoursquare.com/venue/'+item.venue.id
 
-var infowindow = new google.maps.InfoWindow({
-    content: contentString
-});
+	var infowindow = new google.maps.InfoWindow({
+    	content: content
+	});
 
 }
 
@@ -70,13 +64,12 @@ function buildfriendFoursquareCheckinPopup(item){
 						+item.venue.name+'</a><br><i>'
 						+shout+'</i> <img src=\'site_media/yelp.gif\'></td></tr></table>'
 	return ret
-
 }
 
 function buildSelfPopup(item){
 	return "this is a self popup"
-
 }
+
 function getUser(uid){
 	$.getJSON("/getUser/?uid="+uid,
 		function(data){
@@ -84,6 +77,7 @@ function getUser(uid){
 			}
 		);
 }
+
 function putStuffInProfilePane(data){
 	//Take stuff from data
 	x = eval("("+data+")");
@@ -122,39 +116,52 @@ function getRSS(url){
 		}
 	});
 }
-function test(){
-	alert('test');
+
+function myMarker(point, item){
+	return  marker = new google.maps.Marker({
+		position: point,
+		map: map,
+		title: item.venue.name,
+	});
 }
+
 function gotMyCheckins(data){
 	var mydata = eval(data);
-	alert(map);
 	$.each(mydata, function(i,item){
-		//alert(i+" "+item)
-		//alert(buildfriendFoursquareCheckinPopup(item);
-		var lat = item.venue.geolat;
-		var lon = item.venue.geolong;
-		//alert(lat+" second "+lon);;
-		placeMarker(map, item, buildSelfPopup(item))
+		placeMarker(map, item, buildSelfPopup(item), myMarker)
 	});
 }
 
 function loadMyTrips(){
 	$.getJSON("/getMyTrips/", gotMyCheckins);
 }
+
 function loadMyCheckins(feed){
 	$.getJSON("/getMyCheckins/?rss="+feed, gotMyCheckins);
+}
+
+function friendMarkers(point, item){
+	//var shadow = new google.maps.MarkerImage('site_media/shadow.jpg',
+					//new google.maps.Size(80, 62))
+	var image = new google.maps.MarkerImage(item.user.photo,
+					new google.maps.Size(40,50))//,
+					//new google.maps.Point(0,30)
+					//)
+	return  marker = new google.maps.Marker({
+		position: point,
+		icon: image,
+		map: map,
+		//shadow: shadow,
+		title: item.user.firstname + " " + item.user.lastname,
+	});
 }
 
 function doneLoading(){
 	$.getJSON("/getFriends/",
         function(data){
-			//alert(map);
 			a = eval("("+data+")");
           $.each(a['checkins'], function(i,item){
-		var lat = item.venue.geolat;
-		var lon = item.venue.geolong;
-				//alert(lat+" first "+lon);;
-				placeMarker(map, item, buildfriendFoursquareCheckinPopup(item))
+				placeMarker(map, item, buildfriendFoursquareCheckinPopup(item), friendMarkers)
 			});
             //$("<img/>").attr("src", item.media.m).appendTo("#images");
             //if ( i == 3 ) return false;

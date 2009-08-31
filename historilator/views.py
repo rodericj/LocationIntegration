@@ -16,11 +16,12 @@ import config
 import tripit
 import feedparser
 
-@login_required(redirect_field_name='/login')
+#@login_required(redirect_field_name='/login')
 def start(request):
-    ret = {}
-    ret['username'] = request.user.username
-    return render_to_response('profile.html', ret)
+	print "in start"
+	ret = {}
+	ret['username'] = request.user.username
+	return render_to_response('profile.html', ret)
 
 def register(request):
     emailAddress = request.POST['emailaddress']

@@ -16,6 +16,9 @@ import config
 import tripit
 import feedparser
 
+def xd_receiver(request):
+	return render_to_response('xd_receiver.html')
+
 #@login_required(redirect_field_name='/login')
 def start(request):
 	print "in start"

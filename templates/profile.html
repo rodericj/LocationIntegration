@@ -10,6 +10,7 @@
 <script type="text/javascript" src="/site_media/rssajax.js"></script> 
 <script type="text/javascript" src="/site_media/jfeed.js"></script>
 <script>
+var openWindow;
 var maxlat = 0
 var maxlon = 0
 var minlat = 360
@@ -33,7 +34,12 @@ function placeMarker(map, item, content, markerFunction){
 	var marker = markerFunction(point, item);
 
 	google.maps.event.addListener(marker, 'click', function(){
-		infowindow.open(map,marker);
+		if(openWindow != undefined){
+			openWindow.close()
+		}	
+		openWindow = infowindow
+		openWindow.open(map,marker);
+		
 	});
 
 	var shout = item.shout

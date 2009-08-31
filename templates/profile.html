@@ -29,6 +29,10 @@ function placeMarker(map, item, content, markerFunction){
 
 	//Make a point and put it on the map
 	var point = new google.maps.LatLng(lat, lon);
+	//toppoint = new google.maps.LatLng(maxlat, minlon)
+	//bottompoint = new google.maps.LatLng(minlat, maxlon)
+	//bounds = new google.maps.LatLngBounds(bottompoint, toppoint)
+	//map.set_center(bounds.getCenter());
 	map.set_center(point);
 	var myOptions = {zoom:4, center:point,mapTypeId: google.maps.MapTypeId.ROADMAP,}
 	var marker = markerFunction(point, item);
@@ -172,6 +176,16 @@ function friendMarkers(point, item){
 }
 
 function doneLoading(){
+	//set up the left panel some more
+	$(".siteinfo .thebody").hide();
+	$(".authorizedprofile .siteinfo ul")
+		.prepend("<li class='readbody'><a href='' title='expand'>Expand</a></li>");
+	$(".actions li.readbody a").click(function(event){
+		$(this).parents("ul").prev(".thebody").toggle();
+		event.preventDefault();
+	});
+
+	//start ajax calls
 	$.getJSON("/getFriends/",
         function(data){
 			a = eval("("+data+")");
@@ -209,7 +223,7 @@ $(document).ready(doneLoading);
     </script>
 
 </head>
-<body onload="initialize()" onunload="GUnload()">
+<body onload="initialize()" onunload="google.maps.GUnload()">
 <div class = "tabArea" border=1>
 <div>
 you are logged in as {{username}}
@@ -229,6 +243,22 @@ you are logged in as {{username}}
         </div>
         <div id="userinfo">
         </div>
+		<div class='authorizedprofile'>
+		{% for info in services %}
+			<div class='siteinfo'
+			<p class="summary">{{ info }} </p>
+			<p class='thebody'>
+			logo <br>
+			You have a name and stuff<br>
+			You have some profile status<br>
+			</p>
+			<ul class="actions">
+       			<li><a href="">Remove</a></li>
+     		</ul>
+			</div>
+
+		{% endfor %}
+		</div>
     </div>
 
     <div class =mapcontent id="map_canvas" width: 70%; height:100%; float:right;>

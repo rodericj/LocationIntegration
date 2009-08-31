@@ -24,6 +24,7 @@ def start(request):
 	print "in start"
 	ret = {}
 	ret['username'] = request.user.username
+	ret['services'] = ['foursquare', 'yelp', 'carville']
 	return render_to_response('profile.html', ret)
 
 def register(request):

@@ -15,6 +15,8 @@ import logging
 import config
 import tripit
 import feedparser
+import cStringIO
+import Image
 
 def xd_receiver(request):
 	return render_to_response('xd_receiver.html')
@@ -153,12 +155,25 @@ def verifyRegisterParams(emailAddress, username, password, confirmpassword):
     #emailAdd looks like an email addy
     return True
 
+def getUserPhoto(img_path):
+	img_name = img_path.split('/')[-1:][0]
+	#should look up to see if the image is in our servers
+	
+	#if not, make it
+	fp = urllib.urlopen(img_path)
+	img = cStringIO.StringIO(fp.read())
+
+	avatar = Image.open(img)
+	bg = Image.open("site_media/background.jpg")
+	print img_path
+	bg.paste(avatar,(5,5))
+	png_name = img_name.replace('.jpg', '.png')
+	print "saving as: "+png_name
+	bg.save('site_media/photos/'+png_name, "PNG")
+	return 'site_media/photos/'+png_name
+
 def performRequest(url, site, this_user):
 	#Gather Authentication details
-	print "perform Request Stuff:::::::::::::::::"
-	print site
-	print url
-	print this_user
 	oauth_info = this_user.auth_temp_storage_set.filter(site=site['id'], stage=config.storage_stage['second'])
 
 	request_url = url
@@ -232,5 +247,17 @@ def getFriends(request):
 	this_user = User.objects.get(username=request.user.username)
 
 	data = performRequest(request_url, site, this_user)
+
+	#change the picture location for this user
+	print "Friend Data"
+	data = eval(data)
+	for checkin in data['checkins']:
+		img_url = checkin['user']['photo']
+		print img_url
+		#Till we figure out the "decoder jpeg not available"
+		#cachedImg = getUserPhoto(img_url)
+		cachedImg = img_url
+		checkin['user']['photo'] = cachedImg
+	str(data)
 	json = simplejson.dumps(data)
 	return HttpResponse(json, mimetype='application/json')

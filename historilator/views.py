@@ -24,7 +24,7 @@ def start(request):
 	print "in start"
 	ret = {}
 	ret['username'] = request.user.username
-	ret['services'] = ['foursquare', 'yelp', 'carville']
+	ret['services'] = ['foursquare', 'yelp']
 	return render_to_response('profile.html', ret)
 
 def register(request):
@@ -83,6 +83,10 @@ def addServices(request):
 	ret['username'] = request.user.username
 	this_user = User.objects.get(username=request.user.username)
 	
+	#for i in config.oauthsite:
+		#print i
+		#ret[i] = doAuthorizeStep(this_user, i, config.oauthsite[i].get('options', ''))
+		
 	ret['foursquare_link'] = doAuthorizeStep(this_user, 'foursquare')
 	ret['tripit_link'] = doAuthorizeStep(this_user, 'tripit', '&oauth_callback=http://localhost:8000/auth?site=tripit')
 
@@ -90,7 +94,6 @@ def addServices(request):
 
 def auth(request):
 	this_user = User.objects.get(username=request.user.username)
-	print request.GET
 	if request.GET.get('site',0) == 'tripit':
 		site = config.oauthsite['tripit']
 	elif request.META.get('HTTP_REFERER', 0).count('playfoursquare'):
@@ -129,6 +132,8 @@ def doAuthorizeStep(this_user, site_name, options=''):
 		t = tripit.TripIt(oauth_credentials = oauth_credential, api_url = site['api_url'])
 		
 		request_token_batch = t.get_request_token()
+		print "this is the request token batch"	
+		print request_token_batch
 		request_token = request_token_batch['oauth_token']
 		request_token_secret = request_token_batch['oauth_token_secret']
 
@@ -180,7 +185,6 @@ def performRequest(url, site, this_user):
 			raise
 	data = stream.read()
 	stream.close()
-	print data
 	return data
 
 def getMyTrips(request):
@@ -189,9 +193,6 @@ def getMyTrips(request):
 	this_user = User.objects.get(username=request.user.username)
 	data = performRequest(url, site, this_user)
 	data1 = feedparser.parse(data)
-	print data1
-	print data
-	print simplejson.dumps(data1)
 	return HttpResponse(simplejson.dumps(data), mimetype='application/json')
 
 def getMyCheckins(request):
@@ -223,8 +224,6 @@ def getUser(request):
 		request_url = 'http://api.playfoursquare.com/v1/user.json'
 	this_user = User.objects.get(username=request.user.username)
 	data = performRequest(request_url, site, this_user)
-	print "data from getUser"
-	print data
 	return HttpResponse(simplejson.dumps(data), mimetype='application/json')
 
 def getFriends(request):

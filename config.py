@@ -4,6 +4,14 @@ storage_stage = {
 	}
 
 oauthsite = {
+	'twitter':{
+		'id' : 'tw',
+		'api_url' : 'http://twitter.com/oauth/request_token',
+		'api_access_token_url' : 'http://twitter.com/oauth/access_token',
+		'api_authorize_url' : 'http://twitter.com/oauth/authorize',
+		'consumer_key' : 'N9cn8pDGJlCCgIPpGZJHCQ',
+		'consumer_secret' : 'JzX4gNb97Yg98gQzibSaAG0dWPQVlA4M4XaewNsg',
+	},
 	'foursquare':{
 		'id' : '4s',
 		'api_url' : 'http://playfoursquare.com/oauth/request_token',
@@ -13,6 +21,7 @@ oauthsite = {
 		'consumer_secret' : '57c1aac04b076d8743664e2d935da13b',
 	},
 	'tripit':{
+		'options' : '&oauth_callback=http://localhost:8000/auth?site=tripit',
 		'id' : 'tr',
 		'api_url' : 'https://api.tripit.com/oauth/request_token',
 		'api_access_token_url' : 'https://api.tripit.com/oauth/access_token',

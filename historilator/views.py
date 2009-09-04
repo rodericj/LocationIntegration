@@ -24,6 +24,7 @@ def xd_receiver(request):
 #@login_required(redirect_field_name='/login')
 def start(request):
 	print "in start"
+	print type(request)
 	ret = {}
 	ret['username'] = request.user.username
 	ret['services'] = ['foursquare', 'yelp']
@@ -80,6 +81,7 @@ def weblogin(request):
     return HttpResponseRedirect(dest, ret)
 
 def addServices(request):
+	print "addServices"
 	stage=config.storage_stage['first']
 	ret = {}
 	ret['username'] = request.user.username
@@ -159,18 +161,26 @@ def getUserPhoto(img_path):
 	img_name = img_path.split('/')[-1:][0]
 	#should look up to see if the image is in our servers
 	
-	#if not, make it
-	fp = urllib.urlopen(img_path)
-	img = cStringIO.StringIO(fp.read())
+	ret = ''
+	try:
+		#if not, make it
+		fp = urllib.urlopen(img_path)
+		img = cStringIO.StringIO(fp.read())
 
-	avatar = Image.open(img)
-	bg = Image.open("site_media/background.jpg")
-	print img_path
-	bg.paste(avatar,(5,5))
-	png_name = img_name.replace('.jpg', '.png')
-	print "saving as: "+png_name
-	bg.save('site_media/photos/'+png_name, "PNG")
-	return 'site_media/photos/'+png_name
+		avatar = Image.open(img)
+		bg = Image.open("site_media/background.jpg")
+		print img_path
+		bg.paste(avatar,(5,5))
+		png_name = img_name.replace('.jpg', '.png')
+		print "saving as: "+png_name
+		bg.save('site_media/photos/'+png_name, "PNG")
+		ret = 'site_media/photos/'+png_name
+	
+	except:
+		print "exception in Image"
+		ret = 'site_media/photos/'+img_path
+		ret = img_path
+	return ret
 
 def performRequest(url, site, this_user):
 	#Gather Authentication details
@@ -200,6 +210,7 @@ def performRequest(url, site, this_user):
 			raise
 	data = stream.read()
 	stream.close()
+	print type(data)
 	return data
 
 def getMyTrips(request):
@@ -250,13 +261,20 @@ def getFriends(request):
 
 	#change the picture location for this user
 	print "Friend Data"
-	data = eval(data)
+	######ERROR CASE!!!!
+	data = '{"checkins":[{"id":959567,"user":{"id":9546,"firstname":"Terry","lastname":"Chay","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/9546_1238974047.jpg","gender":"male"},"venue":{"id":30936,"name":"Steffs Bar","address":"141 2nd St","crossstreet":"Mission and 2nd","geolat":37.7876,"geolong":-122.399},"display":"Terry C. @ Steffs Bar","created":"Fri, 04 Sep 09 02:10:15 +0000"},{"id":955635,"user":{"id":958,"firstname":"Rod","lastname":"Begbie","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/4a5f997bbd132.jpg","gender":"male"},"venue":{"id":41551,"name":"Slide, Inc.","address":"301 Brannan St","crossstreet":"2nd","geolat":37.7814,"geolong":-122.392},"display":"Rod B. @ Slide, Inc.","created":"Thu, 03 Sep 09 21:50:22 +0000"},{"id":954599,"user":{"id":36678,"firstname":"Andy","lastname":"Denmark","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/blank_boy.png","gender":"male"},"venue":{"id":51018,"name":"Tripit","address":"444 De Haro St","crossstreet":"17th St","geolat":37.7642,"geolong":-122.402},"display":"Andy D. @ Tripit","created":"Thu, 03 Sep 09 20:04:48 +0000"},{"id":954569,"user":{"id":13250,"firstname":"Roderic","lastname":"Campbell","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/13250_1242521904.jpg","gender":"male"},"venue":{"id":38901,"name":"Whole Foods - Potrero Hill","address":"450 Rhode Island St","crossstreet":"17th St","geolat":37.7642,"geolong":-122.402},"display":"Roderic C. @ Whole Foods - Potrero Hill","shout":"Bean salad","created":"Thu, 03 Sep 09 20:02:24 +0000"},{"id":954434,"user":{"id":19282,"firstname":"Beth","lastname":"Hamilton","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/4a5b6757a8ae3.jpg","gender":"female"},"venue":{"id":65300,"name":"Crepevine - Berkeley","address":"1600 Shattuck Ave","crossstreet":"Cedar Street","geolat":37.8784,"geolong":-122.269},"display":"Beth H. @ Crepevine - Berkeley","shout":"No potatoes","created":"Thu, 03 Sep 09 19:49:29 +0000"},{"id":953743,"user":{"id":13739,"firstname":"Jacob","lastname":"Robinson","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/blank_boy.png","gender":"male"},"display":"Jacob R. @ [off the grid]","created":"Thu, 03 Sep 09 18:48:05 +0000"},{"id":949410,"user":{"id":13202,"firstname":"Bobby","lastname":"Joe","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/4a75e658bfc2e.jpg","gender":"male"},"venue":{"id":30547,"name":"Farmer Brown","address":"25 Mason","crossstreet":"Market","geolat":37.7839,"geolong":-122.409},"display":"Bobby J. @ Farmer Brown","created":"Thu, 03 Sep 09 04:02:57 +0000"},{"id":948685,"user":{"id":14285,"firstname":"Jesse","lastname":"Hammons","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/14285_1243723179.jpg","gender":"male"},"venue":{"id":32052,"name":"Citizen Space","address":"425 2nd St","crossstreet":"Harrison","geolat":37.7841,"geolong":-122.394},"display":"Jesse H. @ Citizen Space","created":"Thu, 03 Sep 09 02:54:27 +0000"},{"id":948429,"user":{"id":17608,"firstname":"Anna","lastname":"Lin","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/blank_girl.png","gender":"female"},"venue":{"id":22443,"name":"Sushi Ran","address":"107 Caledonia St","crossstreet":"at Pine","geolat":37.8587,"geolong":-122.486},"display":"Anna L. @ Sushi Ran","created":"Thu, 03 Sep 09 02:35:53 +0000"},{"id":944562,"user":{"id":466,"firstname":"Coley","lastname":"Wopperer","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/466_1236303556.jpg","gender":"female"},"venue":{"id":41288,"name":"Chez Colvin","address":"Connecticut St","crossstreet":"20th","geolat":37.7581,"geolong":-122.397},"display":"Coley W. @ Chez Colvin","created":"Wed, 02 Sep 09 22:09:03 +0000"},{"id":939362,"user":{"id":8829,"firstname":"Matt","lastname":"Billenstein","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/blank_boy.png","gender":"male"},"venue":{"id":2886,"name":"The Mint / Hot N Chunky","address":"1942 Market St","geolat":37.7703,"geolong":-122.426},"display":"Matt B. @ The Mint / Hot N Chunky","created":"Wed, 02 Sep 09 07:39:47 +0000"},{"id":924295,"user":{"id":2954,"firstname":"Adam","lastname":"Christian","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/2954_1237321147.jpg","gender":"male"},"venue":{"id":19061,"name":"Primo Patio Cafe","address":"214 Townsend St","geolat":37.7785,"geolong":-122.393},"display":"Adam C. @ Primo Patio Cafe","created":"Mon, 31 Aug 09 21:40:59 +0000"},{"id":915643,"user":{"id":32311,"firstname":"Alexander","lastname":"Shusta","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/blank_boy.png","gender":"male"},"venue":{"id":37545,"name":"Californias Great America","address":"4701 Great America Pkwy","crossstreet":"at Old Glory Ln","geolat":37.3999,"geolong":-121.978},"display":"Alexander S. @ Californias Great America","created":"Mon, 31 Aug 09 02:14:31 +0000"},{"id":910208,"user":{"id":11333,"firstname":"Morgan","lastname":"Sherwood","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/11333_1240256594.jpg","gender":"female"},"venue":{"id":46457,"name":"Starbucks - 4th & Brannan","address":"490 Brannan St","crossstreet":"at 4th St","geolat":37.7789,"geolong":-122.396},"display":"Morgan S. @ Starbucks - 4th & Brannan","created":"Sun, 30 Aug 09 19:36:29 +0000"},{"id":895871,"user":{"id":35364,"firstname":"jinen","lastname":"kamdar","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/blank_boy.png","gender":"male"},"venue":{"id":75686,"name":"Jamba Juice","address":"22 Battery","crossstreet":"Market","geolat":37.7916,"geolong":-122.399},"display":"jinen k. @ Jamba Juice","created":"Sat, 29 Aug 09 19:00:12 +0000"}]}'
+	print data
+	strippedData = data.replace("'", "")
+	print "stripped data"
+	print strippedData
+	print "fail eval"
+	data = eval(strippedData)
 	for checkin in data['checkins']:
 		img_url = checkin['user']['photo']
 		print img_url
 		#Till we figure out the "decoder jpeg not available"
-		#cachedImg = getUserPhoto(img_url)
-		cachedImg = img_url
+		cachedImg = getUserPhoto(img_url)
+		#cachedImg = img_url
 		checkin['user']['photo'] = cachedImg
 	str(data)
 	json = simplejson.dumps(data)

@@ -1,7 +1,7 @@
 # Create your views here.
 from LocationIntegration.historilator.models import Auth_temp_storage
 
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect, HttpResponse
@@ -9,6 +9,9 @@ from django.shortcuts import render_to_response
 from django.utils import simplejson
 from BeautifulSoup import BeautifulStoneSoup
 
+from datetime import datetime
+import os
+import time
 import urllib
 import urllib2
 import logging
@@ -17,8 +20,125 @@ import tripit
 import feedparser
 import cStringIO
 import Image
+import md5
+
+def test(request):
+	print "xd_receiver test"
+	return render_to_response('test.html')
+
+def logout_user(request):
+	logout(request)
+	return HttpResponseRedirect('/')
+	#return render_to_response('profile.html', {})
+
+# Generates signatures for FB requests/cookies
+def get_facebook_signature(values_dict, is_cookie_check=False):
+	signature_keys = []
+	API_KEY = config.facebook['apikey']
+	API_SECRET = config.facebook['secret']
+	for key in sorted(values_dict.keys()):
+		if (is_cookie_check and key.startswith(API_KEY + '_')):
+			signature_keys.append(key)
+		elif (is_cookie_check is False):
+			signature_keys.append(key)
+
+	if (is_cookie_check):
+		signature_string = ''.join(['%s=%s' % (x.replace(API_KEY + '_',''), values_dict[x]) for x in signature_keys])
+	else:
+		signature_string = ''.join(['%s=%s' % (x, values_dict[x]) for x in signature_keys])
+	signature_string = signature_string + API_SECRET
+
+	return md5.new(signature_string).hexdigest()
+
+def fb_connect(request):
+	data = {}
+	REST_SERVER = 'http://api.facebook.com/restserver.php'
+	api_key =  config.facebook['apikey']
+	secret_key =  config.facebook['secret']
+	cookies = request.COOKIES
+	if not request.user.is_authenticated() and api_key in cookies:
+		print "user is not authenticated and api key is in the cookies"
+		if get_facebook_signature(cookies, True) == cookies[api_key]:
+			print "facebook signature is the apikey"
+			api_timestamp = datetime.fromtimestamp(float(cookies[api_key+"_expires"]))
+			
+			if(api_timestamp > datetime.now()):
+				print "cookies not expired"
+				fb_user= cookies[api_key+'_user']
+				password = md5.new(fb_user+secret_key).hexdigest()
+				try:
+					print "Getting user based on connect login"
+					django_user = User.objects.get(username=fb_user)
+					user = authenticate(username=fb_user,
+										password=password)
+					if user is not None:
+						if user.is_active:
+							print "logging in"
+							data['username'] = fb_user
+							login(request, user)
+							#self.facebook_user_is_authenticated = True	
+						else:
+							request.facebook_message = "Account disabled"
+							delete_fb_cookies = True
+					else:
+						request.facebook_message = "Account problem error"	
+						delete_fb_cookies = True
+			
+				except User.DoesNotExist:
+					#There is no django account, make one
+					# Make request to FB API to get user's first and last name
+					print "user doesn't exist, creating one"
+					user_info= { 'method': 'Users.getInfo', 'api_key': api_key,
+									'call_id': time.time(), 'v': '1.0', 'uids': fb_user,
+									'fields': 'first_name,last_name', 'format': 'json',
+									}
+					user_info_hash = get_facebook_signature(user_info)
+					user_info['sig'] = user_info_hash 
+					user_info= urllib.urlencode(user_info) 
+					user_info_response  = simplejson.load(urllib.urlopen(REST_SERVER, user_info))
+					print user_info_response
+	
+					user = User.objects.create_user(fb_user, '', password)
+					user.first_name = user_info_response[0]['first_name']
+					data['username'] = user.first_name
+					user.last_name = user_info_response[0]['last_name']
+					user.save()
+
+					#Auth and login
+					print "authenticating and logging in"
+					user = authenticate(username=fb_user, password=password)
+					if user is not None:
+						if user.is_active:
+							login(request, user)
+							facebook_user_is_authenticated = True
+						else:
+							request.facebook_message = "Account disabled error"
+							delete_fb_cookies = True
+					else:
+						request.facebook_message = "account problem error"
+						delete_fb_cookies = True
+
+			#cookie session expired
+			else:
+				print "session expired"
+				logout(request)
+				delete_fb_cookies = True
+
+		#cookie values don't match hash
+		else:
+			print "cookie value don't match hash"
+			logout(request)
+			delete_fb_cookies = True
+		#if get_facebook_signature(cookies, True) == cookies[apikey]:
+			#api_timestamp = datetime.fromtimestamp(float(cookies[api_key+"_expires"]))
+	else:
+		print "User was already logged in"
+	print "Data is: "+ str(data)
+
+	return HttpResponse(simplejson.dumps(data), mimetype='application/json')
 
 def xd_receiver(request):
+	print "xd_receiver view"
 	return render_to_response('xd_receiver.html')
 
 #@login_required(redirect_field_name='/login')
@@ -28,6 +148,8 @@ def start(request):
 	ret = {}
 	ret['username'] = request.user.username
 	ret['services'] = ['foursquare', 'yelp']
+	ret['fbkey'] = config.facebook['apikey']
+
 	return render_to_response('profile.html', ret)
 
 def register(request):
@@ -100,7 +222,7 @@ def auth(request):
 	this_user = User.objects.get(username=request.user.username)
 	if request.GET.get('site',0) == 'tripit':
 		site = config.oauthsite['tripit']
-	elif request.META.get('HTTP_REFERER', 0).count('playfoursquare'):
+	elif request.META.get('HTTP_REFERER', 0).count('foursquare'):
 		site = config.oauthsite['foursquare']
 	else:
 		logging.warn("Something is wrong. We are getting oauth requests NOT from a source supported")
@@ -159,9 +281,13 @@ def verifyRegisterParams(emailAddress, username, password, confirmpassword):
 
 def getUserPhoto(img_path):
 	img_name = img_path.split('/')[-1:][0]
+	if True:
+		return 'site_media/photos/'+img_path
 	#should look up to see if the image is in our servers
-	
-	ret = ''
+	print "Trying to open file "+img_name
+	if os.path.exists('site_media/photos/'+img_name):
+		print "it exists"
+		return 'site_media/photos/+img_name'
 	try:
 		#if not, make it
 		fp = urllib.urlopen(img_path)
@@ -189,6 +315,7 @@ def performRequest(url, site, this_user):
 	request_url = url
 	consumer_key = site['consumer_key']
 	consumer_secret = site['consumer_secret']
+	print oauth_info
 	access_token = oauth_info[0].token
 	access_token_secret = oauth_info[0].token_secret
 
@@ -222,7 +349,7 @@ def getMyTrips(request):
 	return HttpResponse(simplejson.dumps(data), mimetype='application/json')
 
 def getMyCheckins(request):
-	kml = 'http://feeds.playfoursquare.com/history/17f32ec6b65e8577d3ea14b0806fd42f.kml'
+	kml = 'http://feeds.foursquare.com/history/17f32ec6b65e8577d3ea14b0806fd42f.kml'
 	urlobj = urllib.urlopen(kml)
 	kmlfeed = urlobj.read()
 	soup = BeautifulStoneSoup(kmlfeed)
@@ -245,29 +372,22 @@ def getVenue(venueId):
 def getUser(request):
 	site = config.oauthsite['foursquare']
 	if request.GET.has_key('uid'):
-		request_url = 'http://api.playfoursquare.com/v1/user.json?uid='+request.GET['uid']
+		request_url = 'http://api.foursquare.com/v1/user.json?uid='+request.GET['uid']
 	else:
-		request_url = 'http://api.playfoursquare.com/v1/user.json'
+		request_url = 'http://api.foursquare.com/v1/user.json'
 	this_user = User.objects.get(username=request.user.username)
 	data = performRequest(request_url, site, this_user)
 	return HttpResponse(simplejson.dumps(data), mimetype='application/json')
 
 def getFriends(request):
 	site = config.oauthsite['foursquare']
-	request_url = 'http://api.playfoursquare.com/v1/checkins.json'
+	request_url = 'http://api.foursquare.com/v1/checkins.json'
 	this_user = User.objects.get(username=request.user.username)
 
 	data = performRequest(request_url, site, this_user)
 
 	#change the picture location for this user
-	print "Friend Data"
-	######ERROR CASE!!!!
-	data = '{"checkins":[{"id":959567,"user":{"id":9546,"firstname":"Terry","lastname":"Chay","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/9546_1238974047.jpg","gender":"male"},"venue":{"id":30936,"name":"Steffs Bar","address":"141 2nd St","crossstreet":"Mission and 2nd","geolat":37.7876,"geolong":-122.399},"display":"Terry C. @ Steffs Bar","created":"Fri, 04 Sep 09 02:10:15 +0000"},{"id":955635,"user":{"id":958,"firstname":"Rod","lastname":"Begbie","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/4a5f997bbd132.jpg","gender":"male"},"venue":{"id":41551,"name":"Slide, Inc.","address":"301 Brannan St","crossstreet":"2nd","geolat":37.7814,"geolong":-122.392},"display":"Rod B. @ Slide, Inc.","created":"Thu, 03 Sep 09 21:50:22 +0000"},{"id":954599,"user":{"id":36678,"firstname":"Andy","lastname":"Denmark","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/blank_boy.png","gender":"male"},"venue":{"id":51018,"name":"Tripit","address":"444 De Haro St","crossstreet":"17th St","geolat":37.7642,"geolong":-122.402},"display":"Andy D. @ Tripit","created":"Thu, 03 Sep 09 20:04:48 +0000"},{"id":954569,"user":{"id":13250,"firstname":"Roderic","lastname":"Campbell","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/13250_1242521904.jpg","gender":"male"},"venue":{"id":38901,"name":"Whole Foods - Potrero Hill","address":"450 Rhode Island St","crossstreet":"17th St","geolat":37.7642,"geolong":-122.402},"display":"Roderic C. @ Whole Foods - Potrero Hill","shout":"Bean salad","created":"Thu, 03 Sep 09 20:02:24 +0000"},{"id":954434,"user":{"id":19282,"firstname":"Beth","lastname":"Hamilton","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/4a5b6757a8ae3.jpg","gender":"female"},"venue":{"id":65300,"name":"Crepevine - Berkeley","address":"1600 Shattuck Ave","crossstreet":"Cedar Street","geolat":37.8784,"geolong":-122.269},"display":"Beth H. @ Crepevine - Berkeley","shout":"No potatoes","created":"Thu, 03 Sep 09 19:49:29 +0000"},{"id":953743,"user":{"id":13739,"firstname":"Jacob","lastname":"Robinson","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/blank_boy.png","gender":"male"},"display":"Jacob R. @ [off the grid]","created":"Thu, 03 Sep 09 18:48:05 +0000"},{"id":949410,"user":{"id":13202,"firstname":"Bobby","lastname":"Joe","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/4a75e658bfc2e.jpg","gender":"male"},"venue":{"id":30547,"name":"Farmer Brown","address":"25 Mason","crossstreet":"Market","geolat":37.7839,"geolong":-122.409},"display":"Bobby J. @ Farmer Brown","created":"Thu, 03 Sep 09 04:02:57 +0000"},{"id":948685,"user":{"id":14285,"firstname":"Jesse","lastname":"Hammons","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/14285_1243723179.jpg","gender":"male"},"venue":{"id":32052,"name":"Citizen Space","address":"425 2nd St","crossstreet":"Harrison","geolat":37.7841,"geolong":-122.394},"display":"Jesse H. @ Citizen Space","created":"Thu, 03 Sep 09 02:54:27 +0000"},{"id":948429,"user":{"id":17608,"firstname":"Anna","lastname":"Lin","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/blank_girl.png","gender":"female"},"venue":{"id":22443,"name":"Sushi Ran","address":"107 Caledonia St","crossstreet":"at Pine","geolat":37.8587,"geolong":-122.486},"display":"Anna L. @ Sushi Ran","created":"Thu, 03 Sep 09 02:35:53 +0000"},{"id":944562,"user":{"id":466,"firstname":"Coley","lastname":"Wopperer","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/466_1236303556.jpg","gender":"female"},"venue":{"id":41288,"name":"Chez Colvin","address":"Connecticut St","crossstreet":"20th","geolat":37.7581,"geolong":-122.397},"display":"Coley W. @ Chez Colvin","created":"Wed, 02 Sep 09 22:09:03 +0000"},{"id":939362,"user":{"id":8829,"firstname":"Matt","lastname":"Billenstein","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/blank_boy.png","gender":"male"},"venue":{"id":2886,"name":"The Mint / Hot N Chunky","address":"1942 Market St","geolat":37.7703,"geolong":-122.426},"display":"Matt B. @ The Mint / Hot N Chunky","created":"Wed, 02 Sep 09 07:39:47 +0000"},{"id":924295,"user":{"id":2954,"firstname":"Adam","lastname":"Christian","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/2954_1237321147.jpg","gender":"male"},"venue":{"id":19061,"name":"Primo Patio Cafe","address":"214 Townsend St","geolat":37.7785,"geolong":-122.393},"display":"Adam C. @ Primo Patio Cafe","created":"Mon, 31 Aug 09 21:40:59 +0000"},{"id":915643,"user":{"id":32311,"firstname":"Alexander","lastname":"Shusta","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/blank_boy.png","gender":"male"},"venue":{"id":37545,"name":"Californias Great America","address":"4701 Great America Pkwy","crossstreet":"at Old Glory Ln","geolat":37.3999,"geolong":-121.978},"display":"Alexander S. @ Californias Great America","created":"Mon, 31 Aug 09 02:14:31 +0000"},{"id":910208,"user":{"id":11333,"firstname":"Morgan","lastname":"Sherwood","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/11333_1240256594.jpg","gender":"female"},"venue":{"id":46457,"name":"Starbucks - 4th & Brannan","address":"490 Brannan St","crossstreet":"at 4th St","geolat":37.7789,"geolong":-122.396},"display":"Morgan S. @ Starbucks - 4th & Brannan","created":"Sun, 30 Aug 09 19:36:29 +0000"},{"id":895871,"user":{"id":35364,"firstname":"jinen","lastname":"kamdar","photo":"http://playfoursquare.s3.amazonaws.com/userpix_thumbs/blank_boy.png","gender":"male"},"venue":{"id":75686,"name":"Jamba Juice","address":"22 Battery","crossstreet":"Market","geolat":37.7916,"geolong":-122.399},"display":"jinen k. @ Jamba Juice","created":"Sat, 29 Aug 09 19:00:12 +0000"}]}'
-	print data
 	strippedData = data.replace("'", "")
-	print "stripped data"
-	print strippedData
-	print "fail eval"
 	data = eval(strippedData)
 	for checkin in data['checkins']:
 		img_url = checkin['user']['photo']

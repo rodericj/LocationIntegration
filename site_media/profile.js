@@ -134,15 +134,16 @@ function putStuffInProfilePane(data){
 	userInfo.appendChild(newdiv);
 }
 
-function getRSS(url){
-	jQuery.getFeed({
-		url:"http://feeds.playfoursquare.com/history/17f32ec6b65e8577d3ea14b0806fd42f.rss", 
-		success: function(feed){
-			alert(feed.title);
-		}
-	});
-}
+function toggleSiteData(form, site){
+	x = site+"_checkbox"
+	if(form.checkbox.checked){
+		$.getJSON("/getFriends/", gotFriends)
+	}
+	else{
 
+	}
+	alert(form.checkbox.checked)	
+}
 function myMarker(point, item){
 	return  marker = new google.maps.Marker({
 		position: point,
@@ -179,6 +180,14 @@ function friendMarkers(point, item){
 		title: item.user.firstname + " " + item.user.lastname,
 	});
 }
+function gotFriends(data){
+	a = eval(data);
+   	$.each(a['checkins'], function(i,item){
+		if(item.venue != null){
+			placeMarker(map, item, buildfriendFoursquareCheckinPopup(item), friendMarkers)
+		}
+	});
+}
 
 function doneLoading(){
 	//set up the left panel some more
@@ -189,26 +198,16 @@ function doneLoading(){
 		$(this).parents("ul").prev(".thebody").toggle();
 		event.preventDefault();
 	});
-
-	//start ajax calls
-	$.getJSON("/getFriends/",
-        function(data){
-			//a = eval("("+data+")");
-			a = eval(data);
-          $.each(a['checkins'], function(i,item){
-				if(item.venue != null){
-					placeMarker(map, item, buildfriendFoursquareCheckinPopup(item), friendMarkers)
-				}
-			});
-            //$("<img/>").attr("src", item.media.m).appendTo("#images");
-            //if ( i == 3 ) return false;
-			//map.panTo(new GLatLng(minlon, minlat), 13);
-	});
-	$.getJSON("/getUser/",
-		function(data){
-			putStuffInProfilePane(data);
-		});
+		//$.getJSON("/getFriends/", gotFriends)
+		$.getJSON("/getUser/", putStuffInProfilePane);
 }
-//$(document).ready(doneLoading);
 
+function facebook_onlogin(){
+	//Do the backend login stuff
+	$.getJSON("/fb_connect/", function(data){
+			var loginArea = document.getElementById('signedIn');
+			loginArea.innerHTML = '<fb:name uid="'+data.username+'" ></fb:name> <fb:profile-pic uid="'+data.username+'" facebook-logo="true" size="thumb" ></fb:profile-pic> <a id="logout_user" href="logout_user" onclick="FB.Connect.ifUserConnected(null,function() { window.location = "logout_user" }); FB.Connect.logoutAndRedirect("logout_user"); return false;">Sign out</a>'
+		});
+	//$.getJSON("/getFriends/", gotFriends)
+}
 

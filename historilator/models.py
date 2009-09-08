@@ -8,6 +8,10 @@ AUTHORIZABLE_SERVICES = (
 	('TR', 'Tripit'),
 )
 
+class FacebookId(models.Model):
+	user = models.ForeignKey(User)
+	facebookId = models.CharField(max_length=265)
+
 class Auth_temp_storage(models.Model):
 	user = models.ForeignKey(User)
 	site = models.CharField(max_length=2, choices=AUTHORIZABLE_SERVICES)

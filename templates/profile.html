@@ -1,60 +1,16 @@
 <!DOCTYPE html "-//W3C//DTD XHTML 1.0 Strict//EN" 
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml">
 
-<!--<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml"> 
--->
 <head>
 <script src="http://maps.google.com/maps/api/js?sensor=false">" type="text/javascript"></script>
 <script type="text/javascript" src="/site_media/jquery.js"></script> 
-<script type="text/javascript" src="/site_media/rssajax.js"></script> 
-<script type="text/javascript" src="/site_media/jfeed.js"></script>
 <script type="text/javascript" src="/site_media/profile.js"></script>
+<script src="http://static.ak.connect.facebook.com/js/api_lib/v0.4/FeatureLoader.js.php/en_US" type="text/javascript"></script>
 <script>
-
-//function putStuffInProfilePane(data){
-	////Take stuff from data
-	//x = eval("("+data+")");
-	//var first = x.user.firstname
-	//var last = x.user.lastname
-	//var city = x.user.city.name
-	//var photo = x.user.photo
-	//var gender = x.user.gender
-	//var checkin_time = x.user.checkin.created
-	//if (x.user.checkin.venue == null){
-		//var venue = ''
-		//var venue_link = ''
-		//var venue_name = ''
-	//}
-	//else{
-		//var venue_link = 'http://playfoursquare.com/venue/'+venue
-		//var venue = x.user.checkin.venue.id
-		//var venue_name = x.user.checkin.venue.name
-	//}
-	//var shout = x.user.checkin.shout
-	//var rss = x.user.settings.feeds_key
-	//if (shout == null){ shout = ''; }
-	//var userInfo = document.getElementById('userinfo');
-//
-	////setup the new div
-	//var newdiv = document.createElement('div');
-	//newdiv.innerHTML = "<img src = "+photo+">"+shout
-						//+"<br><b>"+first+" "+ last +"</b><br><a href="
-						//+venue_link+">"+venue_name+"</a><br><font size=1> "
-						//+ checkin_time
-						//+"<br><a href=# onclick=loadMyCheckins('"+rss+"')>my checkins</a>"
-						//+"<br><a href=# onclick=loadMyTrips()>my trips</a>"
-						////+"<br><a href=# onclick=getRSS('"+rss+"')>333my checkins</a>"
-						//+"</font>"
-	//userInfo.appendChild(newdiv);
-//}
-
 $(document).ready(doneLoading);
-
-
 </script>
 <link rel="stylesheet" href="/site_media/style.css" type="text/css" media="screen"  charset="utf-8">
-<!-- <script src="http://maps.google.com/maps?file=api&v=3&sensor=false&key=ABQIAAAAsYU_U_jVNoazWwWCRWxUmBS9bZigRblo2VqATPXK02zobVRVkhS3BtcPtFP8sXQ3yrRk35yzCld3EQ" type="text/javascript"></script> -->
     <script type="text/javascript">
 
 	var map;
@@ -66,15 +22,25 @@ $(document).ready(doneLoading);
 			mapTypeId: google.maps.MapTypeId.ROADMAP
 		};
 		map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+		//start ajax calls
     }
-
     </script>
 
 </head>
 <body onload="initialize()" onunload="google.maps.GUnload()">
 <div class = "tabArea" border=1>
-<div>
-you are logged in as {{username}}
+<div id = "signedIn">
+{% if username %}
+<fb:name uid="{{username}}" ></fb:name> <fb:profile-pic uid="{{username}}" facebook-logo="true" size="thumb" ></fb:profile-pic>
+<a id="logout_user" href="logout_user" onclick='FB.Connect.ifUserConnected(null,function() { window.location = "logout_user" }); FB.Connect.logoutAndRedirect("logout_user"); return false;'>Sign out</a>
+{% else %}
+{{request}}
+<fb:login-button onlogin="facebook_onlogin()"></fb:login-button>
+{% endif %}
+
+<script type="text/javascript">  
+	FB.init("{{fbkey}}", "templates/xd_receiver.html"); 
+</script>
 </div>
 <div>
 <a href="/addServices">Add services</a>
@@ -94,7 +60,10 @@ you are logged in as {{username}}
 		<div class='authorizedprofile'>
 		{% for info in services %}
 			<div class='siteinfo'
-			<p class="summary">{{ info }} </p>
+			<p class="summary">{{ info }} 
+			<form>
+			<input type=checkbox name="checkbox" onClick="toggleSiteData(this.form, '{{info}}')"></p>
+			</form>
 			<p class='thebody'>
 			logo <br>
 			You have a name and stuff<br>

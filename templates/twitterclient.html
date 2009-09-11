@@ -1,0 +1,27 @@
+<html>
+<head>
+<script type="text/javascript" src="/site_media/jquery.js"></script> 
+<script type="text/javascript" src="/site_media/twitterclient.js"></script>
+<script type="text/javascript" src="/site_media/tag.js"></script>
+{% if login %}
+<script>
+$(document).ready(doneLoading);
+</script>
+
+</head>
+<div id="twitterclientbody">
+</div>
+{% else %}
+</head>
+oh hai
+<div id="twitterlogin">
+<form name="twitterloginform" action=# onSubmit="return loginToTwitter();">
+	username: <input type="text" name="twitterusername"><br>
+	password: <input type="password" name="twitterpassword"><br>
+	<input type="submit" value="Login" maxlength=10><br>
+	<font color=red>{{ loginret }}</font>
+</form>
+</div>
+{% endif %}
+
+</html>

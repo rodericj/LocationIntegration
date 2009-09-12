@@ -19,6 +19,7 @@ urlpatterns = patterns('',
     (r'^addServices/', 'LocationIntegration.historilator.views.addServices'),
     (r'^auth/', 'LocationIntegration.historilator.views.auth'),
     (r'^test/', 'LocationIntegration.historilator.views.xd_receiver'),
+    (r'^fbtripit/', 'LocationIntegration.fbtripit.views.test'),
 	#(r'^xd_receiver\.html$', xd_receiver),
     (r'^site_media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': os.getcwd()+'/site_media'}),
 

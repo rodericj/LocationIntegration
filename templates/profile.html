@@ -37,6 +37,14 @@ $(document).ready(doneLoading);
 {{request}}
 <fb:login-button onlogin="facebook_onlogin()"></fb:login-button>
 {% endif %}
+<div id="twitterlogin">
+<form action="/twitterlogin/" method="post">
+	username: <input type="text" name="twitterusername"><br>
+	password: <input type="password" name="twitterpassword"><br>
+	<input type="submit" value="Login" maxlength=10><br>
+	<font color=red>{{ loginret }}</font>
+</form>
+</div>
 
 <script type="text/javascript">  
 	FB.init("{{fbkey}}", "templates/xd_receiver.html"); 

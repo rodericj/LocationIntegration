@@ -81,6 +81,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'LocationIntegration.historilator',
+    'LocationIntegration.twitterclient',
 )
 
 OAUTH_REALM_KEY_NAME = "http://api.playfoursquare.com"

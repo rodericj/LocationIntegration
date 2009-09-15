@@ -209,23 +209,30 @@ def addServices(request):
 	ret['username'] = request.user.username
 	this_user = User.objects.get(username=request.user.username)
 	
-	#for i in config.oauthsite:
-		#print i
-		#ret[i] = doAuthorizeStep(this_user, i, config.oauthsite[i].get('options', ''))
-		
-	ret['foursquare_link'] = doAuthorizeStep(this_user, 'foursquare')
-	ret['tripit_link'] = doAuthorizeStep(this_user, 'tripit', '&oauth_callback=http://localhost:8000/auth?site=tripit')
+	for i in config.oauthsite:
+		print i
+		ret[i+'_link'] = doAuthorizeStep(this_user, i, config.oauthsite[i].get('options', ''))
 
 	return render_to_response('login.html', ret)
 
-def auth(request):
-	this_user = User.objects.get(username=request.user.username)
-	if request.GET.get('site',0) == 'tripit':
-		site = config.oauthsite['tripit']
-	elif request.META.get('HTTP_REFERER', 0).count('foursquare'):
-		site = config.oauthsite['foursquare']
-	else:
-		logging.warn("Something is wrong. We are getting oauth requests NOT from a source supported")
+def tripitauth(request):
+	return auth(request, site = config.oauthsite['tripit'])
+	
+def foursquareauth(request):
+	return auth(request, site = config.oauthsite['foursquare'])
+	
+def twitterauth(request):
+	return auth(request, site = config.oauthsite['twitter'])
+	
+def auth(request, site):
+	this_user = request.user
+	#this_user = User.objects.get(username=request.user.username)
+	#if request.GET.get('site',0) == 'tripit':
+		#site = config.oauthsite['tripit']
+	#elif request.META.get('HTTP_REFERER', 0).count('foursquare'):
+		#site = config.oauthsite['foursquare']
+	#else:
+		#logging.warn("Something is wrong. We are getting oauth requests NOT from a source supported")
 
 	#from site specific config dict
 	consumer_key = site['consumer_key']
@@ -235,12 +242,16 @@ def auth(request):
 
 	#need to get the oauth consumer secret and key from db (or preferably cache)
 	key_row = Auth_temp_storage.objects.filter(user=request.user, site=id)
+	print key_row
 	request_token = key_row[0].token
 	request_token_secret = key_row[0].token_secret
 
 	oauth_credential = tripit.OAuthConsumerCredential(oauth_consumer_key=consumer_key, oauth_consumer_secret=consumer_secret, oauth_token=request_token, oauth_token_secret=request_token_secret)
+	print oauth_credential
+	print api_url
 	t = tripit.TripIt(oauth_credentials = oauth_credential, api_url = api_url)
 	access_token_batch = t.get_access_token()
+	print access_token_batch
 	access_token = access_token_batch['oauth_token']
 	access_token_secret = access_token_batch['oauth_token_secret']
 	
@@ -256,10 +267,9 @@ def doAuthorizeStep(this_user, site_name, options=''):
 		oauth_credential = tripit.OAuthConsumerCredential(oauth_consumer_key=site['consumer_key'], oauth_consumer_secret=site['consumer_secret'])
 	
 		t = tripit.TripIt(oauth_credentials = oauth_credential, api_url = site['api_url'])
-		
 		request_token_batch = t.get_request_token()
-		print "this is the request token batch"	
-		print request_token_batch
+
+		#print request_token_batch
 		request_token = request_token_batch['oauth_token']
 		request_token_secret = request_token_batch['oauth_token_secret']
 
@@ -271,6 +281,7 @@ def doAuthorizeStep(this_user, site_name, options=''):
 		tmp = this_user.auth_temp_storage_set.create(site=site['id'], token=request_token, token_secret=request_token_secret, stage=1)
 	
 		tmp.save()
+		print link
 		return link
 
 def verifyRegisterParams(emailAddress, username, password, confirmpassword):

@@ -24,6 +24,10 @@ urlpatterns = patterns('',
 	(r'^templates/xd_receiver\.html$', xd_receiver),
     (r'^site_media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': os.getcwd()+'/site_media'}),
 
+    (r'^twitterlogin/$', 'LocationIntegration.twitterclient.views.twitterlogin'),
+    (r'^twitter/$', 'LocationIntegration.twitterclient.views.twitter'),
+    (r'^twittertag/$', 'LocationIntegration.twitterclient.views.twittertag'),
+    (r'^twittertag/user/(?P<twitter_id>[\d\w]+)/$', 'LocationIntegration.twitterclient.views.userprofile'),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:

@@ -1,0 +1,23 @@
+<html>
+<head>
+<script type="text/javascript" src="/site_media/jquery.js"></script> 
+<script type="text/javascript" src="/site_media/jquery.tagcloud.js"></script> 
+<script type="text/javascript" src="/site_media/twitterclient.js"></script>
+<script>
+function doneLoading(){
+	$.getJSON("/twitter/?user={{twitter_id}}", gotData);
+}
+$(document).ready(doneLoading);
+
+//#$("usertags").tagcloud();
+</script>
+</head>
+<h1>{{twitter_id}}</h1>
+<ul id="usertags" onload="$('usertags').tagcloud();">
+{% for tag in tags %}
+	<li value=1>{{tag}}</li>
+{% endfor %}
+</ul>
+<div id="twitterclientbody"/>
+
+</html>
